@@ -5,18 +5,85 @@ import Big from 'big.js';
 import Form from './components/Form';
 import SignIn from './components/SignIn';
 import Messages from './components/Messages';
+import './App.css'
+
+import { providers, utils } from 'near-api-js';
 
 const SUGGESTED_DONATION = '0';
 const BOATLOAD_OF_GAS = Big(3).times(10 ** 13).toFixed();
 
 const App = ({ contract, currentUser, nearConfig, wallet }) => {
   const [messages, setMessages] = useState([]);
+  const [account, setAccount] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const selector = window.selector;
+
+  var today = new Date();
+
+  var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  
+  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+  
+  var dateTime = date+' '+time;
+
+  if (window.accountId == '') {
+    selector.getAccounts().then((value) => {
+      window.accountId = value[0].accountId;
+    });
+  }
+
+
+  const get_account = async () => {
+    if (window.accountId == '') {
+      return null;
+    }
+
+    const { nodeUrl } = selector.network;
+    const provider = new providers.JsonRpcProvider({ url: nodeUrl });
+
+    return provider.query({
+      request_type: "view_account",
+      finality: "final",
+      account_id: window.accountId,
+    }).then((data) => ({
+      ...data,
+      account_id: window.accountId,
+    }));
+  }
 
   useEffect(() => {
-    // TODO: don't just fetch once; subscribe!
-    contract.getMessages().then(setMessages);
+    setLoading(true);
+
+    get_account().then((value) => {
+      window.account = value;
+      setAccount(value);
+      setLoading(false);
+    });
+  }, []);
+  const get_messages = () => {
+    const provider = new providers.JsonRpcProvider({
+      url: selector.network.nodeUrl,
+    });
+
+    return provider.query({
+      request_type: "call_function",
+      account_id: selector.getContractId(),
+      method_name: "getMessages",
+      args_base64: "",
+      finality: "optimistic",
+    }).then((res) => {
+      return JSON.parse(Buffer.from(res.result).toString())
+    }).catch((err) => console.error(err));
+  }
+
+  useEffect(() => {
+    get_messages().then(setMessages);
   }, []);
 
+  window.get_messages = get_messages;
+
+  console.log(typeof(date))
   const onSubmit = (e) => {
     e.preventDefault();
 
@@ -27,69 +94,95 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
     // TODO: optimistically update page with new message,
     // update blockchain data in background
     // add uuid to each message, so we know which one is already known
-    contract.addMessage(
-      { text: message.value },
-      BOATLOAD_OF_GAS,
-      Big(donation.value || '0').times(10 ** 24).toFixed()
-    ).then(() => {
-      contract.getMessages().then(messages => {
+    selector.signAndSendTransaction({
+      signerId: window.accountId,
+      actions: [{
+        type: "FunctionCall",
+        params: {
+          methodName: "addMessage",
+          args: {
+             text: message.value,
+             timedate:dateTime,
+          },
+          gas: BOATLOAD_OF_GAS,
+          deposit: utils.format.parseNearAmount(donation.value || '0'),
+        },
+      },],
+    }).catch((err) => {
+      alert("Failed to add message");
+      throw err;
+    }).then(() => {
+      return get_messages().then(messages => {
         setMessages(messages);
         message.value = '';
         donation.value = SUGGESTED_DONATION;
         fieldset.disabled = false;
         message.focus();
+      }).catch((err) => {
+        alert("Failed to refresh messsages.");
+        throw err;
       });
+    }).catch((err) => {
+      console.error(err);
+      fieldset.disabled = false;
     });
   };
 
   const signIn = () => {
-    wallet.requestSignIn(
-      {contractId: nearConfig.contractName, methodNames: [contract.addMessage.name]}, //contract requesting access
-      'NEAR Guest Book', //optional name
-      null, //optional URL to redirect to if the sign in was successful
-      null //optional URL to redirect to if the sign in was NOT successful
-    );
+    selector.show()
+
   };
 
   const signOut = () => {
-    wallet.signOut();
-    window.location.replace(window.location.origin + window.location.pathname);
+    selector.signOut().catch((err) => {
+      console.log("Failed to sign out.");
+      alert('Failed to sign out.');
+    });
+    window.accountId = '';
   };
 
+  if (loading) {
+    return null;
+  }
   return (
     <main>
       <header>
         <h1>NEAR Guest Book</h1>
-        { currentUser
+        { selector.isSignedIn()
           ? <button onClick={signOut}>Log out</button>
           : <button onClick={signIn}>Log in</button>
         }
       </header>
-      { currentUser
-        ? <Form onSubmit={onSubmit} currentUser={currentUser} />
+      { selector.isSignedIn()
+        ? <Form 
+            onSubmit={onSubmit} 
+          />
         : <SignIn/>
       }
-      { !!currentUser && !!messages.length && <Messages messages={messages}/> }
+      { !!selector.isSignedIn() && 
+        !!messages.length && 
+        <Messages messages={messages}/> }
     </main>
   );
 };
 
+
 App.propTypes = {
-  contract: PropTypes.shape({
-    addMessage: PropTypes.func.isRequired,
-    getMessages: PropTypes.func.isRequired
-  }).isRequired,
-  currentUser: PropTypes.shape({
-    accountId: PropTypes.string.isRequired,
-    balance: PropTypes.string.isRequired
-  }),
+  // contract: PropTypes.shape({
+  //   add_message: PropTypes.func.isRequired,
+  //   get_messages: PropTypes.func.isRequired
+  // }).isRequired,
+  // currentUser: PropTypes.shape({
+  //   accountId: PropTypes.string.isRequired,
+  //   balance: PropTypes.string.isRequired
+  // }),
   nearConfig: PropTypes.shape({
     contractName: PropTypes.string.isRequired
   }).isRequired,
-  wallet: PropTypes.shape({
-    requestSignIn: PropTypes.func.isRequired,
-    signOut: PropTypes.func.isRequired
-  }).isRequired
+  // wallet: PropTypes.shape({
+  //   requestSignIn: PropTypes.func.isRequired,
+  //   signOut: PropTypes.func.isRequired
+  // }).isRequired
 };
 
 export default App;

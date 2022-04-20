@@ -7,10 +7,27 @@ export default function Messages({ messages }) {
       <h2>Messages</h2>
       {messages.map((message, i) =>
         // TODO: format as cards, add timestamp
-        <p key={i} className={message.premium ? 'is-premium' : ''}>
-          <strong>{message.sender}</strong>:<br/>
-          {message.text}
-        </p>
+       
+        <div key={i} >
+
+          <div className="container">
+            
+  <div className="arrow" >
+    <div className="outer" ></div>
+    <div className="inner" ></div>
+  </div>
+  
+  <div className="message-body" style={{'backgroundColor': message.premium ? '#7676ff' : ''}}>
+  {message.premium ? <p>Premium</p> : ''}
+  <strong>{message.sender}</strong>:<br/>
+  <p>Time :{message.timedate}</p>
+
+    <p>{message.text}</p>
+  </div>
+  
+</div>
+
+        </div>
       )}
     </>
   );

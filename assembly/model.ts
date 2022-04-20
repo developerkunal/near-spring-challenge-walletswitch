@@ -1,4 +1,4 @@
-import { context, u128, PersistentVector } from "near-sdk-as";
+import { context, u128, PersistentVector, } from "near-sdk-as";
 
 /** 
  * Exporting a new class PostedMessage so it can be used outside of this file.
@@ -7,7 +7,7 @@ import { context, u128, PersistentVector } from "near-sdk-as";
 export class PostedMessage {
   premium: boolean;
   sender: string;
-  constructor(public text: string) {
+  constructor(public text: string,public timedate:string) {
     this.premium = context.attachedDeposit >= u128.from('10000000000000000000000');
     this.sender = context.sender;
   }
