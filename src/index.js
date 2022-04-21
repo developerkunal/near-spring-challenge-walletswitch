@@ -6,6 +6,8 @@ import * as nearAPI from 'near-api-js';
 import NearWalletSelector, { AccountInfo } from "@near-wallet-selector/core";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
 import { setupSender } from "@near-wallet-selector/sender";
+import senderimg from './assets/sender-icon.png'
+import nearicon from './assets/near-icon.png'
 // Initializing contract
 async function initContract() {
   // get network configuration values from config.js
@@ -23,8 +25,8 @@ async function initContract() {
     network: "testnet",
     contractId: CONTRACT_NAME,
     wallets: [
-      setupNearWallet(),
-      setupSender(),
+      setupNearWallet({'iconUrl':nearicon}),
+      setupSender({'iconUrl':senderimg}),
     ],
   });
 

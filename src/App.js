@@ -130,7 +130,7 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
 
   const signIn = () => {
     selector.show()
-
+    
   };
 
   const signOut = () => {
