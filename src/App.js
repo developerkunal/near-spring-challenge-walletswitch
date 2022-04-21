@@ -134,7 +134,9 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
   };
 
   const signOut = () => {
-    selector.signOut().catch((err) => {
+    selector.signOut().then((value)=>{
+      window.location.reload();
+    }).catch((err) => {
       console.log("Failed to sign out.");
       alert('Failed to sign out.');
     });
