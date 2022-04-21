@@ -16,7 +16,6 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
   const [messages, setMessages] = useState([]);
   const [account, setAccount] = useState({});
   const [loading, setLoading] = useState(true);
-  const [loggedin,setLoggedin] = useState(false);
   const selector = window.selector;
 
   var today = new Date();
