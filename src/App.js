@@ -16,7 +16,7 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
   const [messages, setMessages] = useState([]);
   const [account, setAccount] = useState({});
   const [loading, setLoading] = useState(true);
-
+  const [loggedin,setLoggedin] = useState(false);
   const selector = window.selector;
 
   var today = new Date();
@@ -32,6 +32,11 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
       window.accountId = value[0].accountId;
     });
   }
+  const handleSignIn = () => {
+    window.location.reload();
+  }
+  
+  selector.on("signIn", handleSignIn);
 
 
   const get_account = async () => {
@@ -127,9 +132,10 @@ const App = ({ contract, currentUser, nearConfig, wallet }) => {
       fieldset.disabled = false;
     });
   };
-
+  
   const signIn = () => {
     selector.show()
+    
     
   };
 

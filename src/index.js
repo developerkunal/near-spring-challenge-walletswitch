@@ -29,7 +29,7 @@ async function initContract() {
       setupSender({'iconUrl':senderimg}),
     ],
   });
-
+  
   window.selector = selector;
   window.accountId = '';
 /* 
